@@ -1,0 +1,6 @@
+*.swp
+*.pyc
+*.cypthon-35.pyc
+*.py.swp
+.ropeproject/
+**/__pycache__/
