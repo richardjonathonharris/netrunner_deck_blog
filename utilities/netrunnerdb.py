@@ -1,4 +1,6 @@
 import requests
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
 
 
 class NetrunnerCardScraper:
@@ -38,6 +40,60 @@ class NetrunnerCardScraper:
             'memoryunits': card_info.get('memoryunits', None)
         }
         return return_dict
+
+    def _connect_to_db(self, database):
+        return create_engine(database, echo=True)
+
+    def identify_table(self, table):
+        self.table = table
+
+    def add_card_info_to_db(self, card_dict, engine):
+        card = Cards(title=card_dict['title'],
+                     card_type=card_dict['type'],
+                     faction=card_dict['faction'],
+                     text=card_dict['text'],
+                     code=card_dict['code'],
+                     uniqueness=card_dict['uniqueness'],
+                     cyclenumber=card_dict['cyclenumber'],
+                     faction_letter=card_dict['faction_letter'],
+                     limited=card_dict['limited'],
+                     decksize=card_dict['minimumdecksize'],
+                     number=card_dict['number'],
+                     set_code=card_dict['set_code'],
+                     side=card_dict['side'],
+                     quantity=card_dict['quantity'],
+                     cost=card_dict['cost'],
+                     factioncost=card_dict['factioncost'],
+                     strength=card_dict['strength'],
+                     memory=card_dict['memoryunits'])
+        engine.add(card)
+
+Base = declarative_base()
+
+class Cards(Base):
+    __tablename__ = 'cards'
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String)
+    card_type = Column(String)
+    faction = Column(String)
+    text = Column(String)
+    code = Column(String)
+    uniqueness = Column(String)
+    cyclenumber = Column(String)
+    faction_letter = Column(String)
+    limited = Column(String)
+    limited = Column(String)
+    decksize = Column(String)
+    number = Column(String)
+    set_code = Column(String)
+    side = Column(String)
+    quantity = Column(String)
+    cost = Column(String)
+    factioncost = Column(String)
+    strength = Column(String)
+    memory = Column(String)
+
 
 if __name__ == '__main__':
     get_cards = NetrunnerCardScraper()

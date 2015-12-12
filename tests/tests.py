@@ -1,6 +1,6 @@
 import unittest
-from utilities.netrunnerdb import NetrunnerCardScraper
-
+from utilities.netrunnerdb import NetrunnerCardScraper, Cards, Base
+from sqlalchemy.orm import sessionmaker
 
 class TestBasicCardScraper(unittest.TestCase):
 
@@ -54,6 +54,51 @@ class TestBasicCardScraper(unittest.TestCase):
         self.assertDictEqual(parsed_info,
                              expected_entry,
                              'Expected parsed data does not equal generated.')
+
+    def test_connect_to_in_memory_db(self):
+        self.test_class._connect_to_db('sqlite:///:memory:')
+        # We need to figure out what to actually *test* here
+
+    def test_database_mapping(self):
+        cards = Cards()
+        self.assertEqual(cards.__tablename__,
+                         'cards',
+                         'Table should return expected tablename')
+
+    def test_database_adds_test_info(self):
+        Base()
+        Cards()
+        engine = self.test_class._connect_to_db('sqlite:///:memory:')
+        Base.metadata.create_all(engine)
+        test_card = Cards(title='Title',
+                          text='Text',
+                          faction='Faction',
+                          card_type='Card')
+        self.assertEqual(test_card.id,
+                         None)
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        session.add(test_card)
+        self.assertEqual(session.query(Cards).filter_by(text='Text').first().text,
+                         'Text')
+        self.assertEqual(session.query(Cards).filter_by(text='Text').first().id,
+                         1)
+
+    def test_scraper_adds_card_info_correctly(self):
+        Base()
+        Cards()
+        engine = self.test_class._connect_to_db('sqlite:///:memory:')
+        Base.metadata.create_all(engine)
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        card_info = self.test_class._get_card_info()[0]
+        parsed_info = self.test_class._parse_card_info(card_info)
+        self.test_class.add_card_info_to_db(parsed_info, session)
+        test_query = session.query(Cards).filter_by(faction='Neutral').first()
+        self.assertEqual(test_query.faction,
+                         'Neutral')
+
+
 
 if __name__ == '__main__':
     print('Use nosetest you silly boy')
