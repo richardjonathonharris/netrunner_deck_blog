@@ -4,3 +4,4 @@
 *.py.swp
 .ropeproject/
 **/__pycache__/
+*.db
