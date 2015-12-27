@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from utilities.orm import Cards, Decks, Decklists, Base
 from datetime import datetime, timedelta
-
+import time
 
 class NetrunnerCardScraper:
 
@@ -72,7 +72,7 @@ class NetrunnerCardScraper:
                      memory=card_dict['memoryunits'])
         engine.add(card)
 
-    def execute(self):
+    def main(self):
         engine = self._connect_to_db(self.database)
         Session = sessionmaker(bind=engine)
         session = Session()
@@ -159,15 +159,29 @@ class NetrunnerDeckScraper:
         datetime_start = self._string_to_datetime(start_date)
         today = datetime.today()
         delta = today - datetime_start
+        print('End date is today %s' % today)
+        print('Starting at %s' % datetime_start)
+        counter = 0
         for i in range(delta.days + 1):
             current_date = datetime_start + timedelta(days=i)
+            print('Current date is %s' % current_date)
             deck_info = self._get_one_days_decks(
                 current_date.strftime('%Y-%m-%d'))
+            print('Received deck information for %s' % current_date)
+            if not deck_info:
+                print('No decks available for %s' % current_date)
+                pass
             for entry in deck_info:
                 deck_dictionary = self._parse_deck_info(entry)
                 decklist_dictionary = self._parse_decklist_info(entry)
                 self.add_deck_info_to_db(deck_dictionary, session)
                 self.add_decklist_info_to_db(decklist_dictionary, session)
+            print('Sleeping for 2 seconds for API Limiting')
+            time.sleep(2)
+            counter += 1
+            if counter == 10:
+                session.commit()
+                counter = 0
         session.commit()
 
 if __name__ == '__main__':
