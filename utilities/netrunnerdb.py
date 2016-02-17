@@ -1,5 +1,5 @@
 import requests
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 from utilities.orm import Cards, Decks, Decklists, Base
 from datetime import datetime, timedelta
@@ -139,7 +139,7 @@ class NetrunnerDeckScraper:
             engine.add(decklist)
 
     def _string_to_datetime(self, string):
-        return datetime.strptime(string, '%Y-%m-%d')
+        return datetime.strptime(string, '%Y-%m-%d %H:%M:%S').date()
 
     def main(self):
         engine = self._connect_to_db(self.database)
@@ -153,11 +153,11 @@ class NetrunnerDeckScraper:
             if not self.update:
                 start_date = '2013-12-01'
             else:
-                start_date = session.query(func.max(Dates.created_at)).first()
+                start_date = session.query(func.max(Decks.created_at)).first()
         else:
             start_date = self.start_date
-        datetime_start = self._string_to_datetime(start_date)
-        today = datetime.today()
+        datetime_start = self._string_to_datetime(start_date[0])
+        today = datetime.today().date()
         delta = today - datetime_start
         print('End date is today %s' % today)
         print('Starting at %s' % datetime_start)
